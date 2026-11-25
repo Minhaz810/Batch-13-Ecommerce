@@ -44,10 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local apps
+    'Shared',
     'account',
     'product',
     'cart',
     'order',
+    'payments',
     'review',
 ]
 
@@ -141,3 +143,5 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+AUTH_USER_MODEL = "account.User"
