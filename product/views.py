@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,get_object_or_404
 from product.models import Product,ProductVariant,ProductCategory
 from django.db.models import Q
 
@@ -46,3 +46,15 @@ def product_list(request):
         'total_count': products.count(),
     }
     return render(request, 'product_list.html', context)
+
+
+def product_detail(request, slug):
+    product = get_object_or_404(
+        Product.objects.select_related('product_category'),
+        slug = slug,
+    )
+
+    return render(request, 'product_detail.html', {
+        'product': product,
+        'variants': product.variants.all(),
+    })

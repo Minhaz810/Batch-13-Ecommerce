@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Your Shopping Cart - Habijabi{% endblock %}
+
+{% block content %}
+<div class="cart-page-container">
+  <div class="cart-header">
+    <h1 class="cart-title">Shopping Cart</h1>
+    <span class="cart-item-count-badge">{{ total_items }} item{{ total_items|pluralize }}</span>
+  </div>
+
+  <!-- Flash Messages -->
+  {% if messages %}
+    <div class="messages-container">
+      {% for message in messages %}
+        <div class="alert-box alert-{{ message.tags }}">
+          <div class="alert-content">
+            {% if message.tags == 'success' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            {% elif message.tags == 'warning' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
+            {% endif %}
+            <span>{{ message }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if cart_items %}
+    <div class="cart-layout-grid">
+      <!-- Left: Items List -->
+      <div class="cart-items-wrapper">
+        <div class="cart-items-list">
+          {% for item in cart_items %}
+            <div class="cart-item-row" id="cart-item-{{ item.id }}">
+              <!-- Thumbnail -->
+              <a href="{% url 'products:product_detail' item.variant.product.slug %}" class="cart-item-img-box">
+                {% with first_img=item.variant.product.images.first %}
+                  {% if first_img and first_img.image %}
+                    <img src="{{ first_img.image.url }}" alt="{{ item.variant.product.product_name }}">
+                  {% else %}
+                    <div class="cart-item-placeholder">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                        <circle cx="9" cy="9" r="2"/>
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                      </svg>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </a>
+
+              <!-- Info -->
+              <div class="cart-item-info">
+                <a href="{% url 'products:product_detail' item.variant.product.slug %}" class="cart-item-title">
+                  {{ item.variant.product.product_name }}
+                </a>
+                <div class="cart-item-meta">
+                  <span class="meta-tag">Variant: <strong>{{ item.variant.name }}</strong></span>
+                  {% if item.variant.color %}
+                    <span class="meta-tag">Color: <strong>{{ item.variant.color }}</strong></span>
+                  {% endif %}
+                </div>
+                <div class="cart-item-price-unit">
+                  ${{ item.variant.product.price }} each
+                </div>
+              </div>
+
+              <!-- Quantity Controls -->
+              <div class="cart-item-qty">
+                <form action="{% url 'cart:update_cart_quantity' item.id %}" method="POST" class="qty-form">
+                  {% csrf_token %}
+                  <div class="quantity-picker small">
+                    <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" class="qty-btn" title="Decrease">-</button>
+                    <input type="text" readonly value="{{ item.quantity }}" class="qty-input">
+                    <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}" class="qty-btn" title="Increase" {% if item.quantity >= item.variant.stock %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>+</button>
+                  </div>
+                </form>
+                <div class="item-stock-hint">
+                  Max: {{ item.variant.stock }} in stock
+                </div>
+              </div>
+
+              <!-- Line Total -->
+              <div class="cart-item-total">
+                <span class="line-total-val">${{ item.total_price }}</span>
+              </div>
+
+              <!-- Delete / Remove Action -->
+              <div class="cart-item-delete">
+                <a href="{% url 'cart:remove_from_cart' item.id %}" class="btn-remove-item" title="Remove from cart" onclick="return confirm('Remove {{ item.variant.product.product_name }} ({{ item.variant.name }}) from cart?');">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"/>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    <line x1="10" x2="10" y1="11" y2="17"/>
+                    <line x1="14" x2="14" y1="11" y2="17"/>
+                  </svg>
+                  <span>Remove</span>
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="cart-actions-row">
+          <a href="{% url 'products:product_list' %}" class="btn-continue-shopping">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6"/>
+            </svg>
+            <span>Continue Shopping</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right: Summary Card -->
+      <div class="cart-summary-wrapper">
+        <div class="cart-summary-card">
+          <h2 class="summary-title">Order Summary</h2>
+
+          <div class="summary-line">
+            <span>Subtotal ({{ total_items }} item{{ total_items|pluralize }})</span>
+            <span class="summary-val">${{ total_price }}</span>
+          </div>
+
+          <div class="summary-line">
+            <span>Estimated Shipping</span>
+            <span class="summary-val free-shipping">FREE</span>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-total-line">
+            <span>Total</span>
+            <span class="summary-grand-total">${{ total_price }}</span>
+          </div>
+
+          <form action="{% url 'cart:create_checkout_session' %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn-checkout" id="btn-stripe-checkout">
+              <span>Proceed to Checkout</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14"/>
+                <path d="m12 5 7 7-7 7"/>
+              </svg>
+            </button>
+          </form>
+
+          <div class="summary-perks">
+            <div class="perk-row">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              <span>Safe & Encrypted Checkout</span>
+            </div>
+            <div class="perk-row">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>Instant Confirmation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <!-- Empty Cart State -->
+    <div class="empty-cart-card">
+      <div class="empty-cart-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="21" r="1"/>
+          <circle cx="19" cy="21" r="1"/>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+        </svg>
+      </div>
+      <h2 class="empty-cart-title">Your cart is empty</h2>
+      <p class="empty-cart-text">Looks like you haven't added anything to your cart yet. Explore our awesome catalog to find great deals!</p>
+      <a href="{% url 'products:product_list' %}" class="btn-start-shopping">
+        <span>Explore Products</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+          <path d="m12 5 7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
